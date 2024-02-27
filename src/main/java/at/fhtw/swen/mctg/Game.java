@@ -2,9 +2,10 @@ package at.fhtw.swen.mctg;
 
 public class Game {
     private int round;
-    private User player1;
-    private User player2;
-    final int ROUNDMAX = 100;
+    private final User player1;
+    private final User player2;
+
+    int ROUNDMAX = 100;
 
     public Game(User player1, User player2) {
         this.player1 = player1;
