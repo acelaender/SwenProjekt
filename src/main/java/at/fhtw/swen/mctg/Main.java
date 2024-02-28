@@ -1,5 +1,9 @@
 package at.fhtw.swen.mctg;
 
+import at.fhtw.swen.mctg.businesslayer.BusinessHandler;
+import at.fhtw.swen.mctg.models.Stack;
+import at.fhtw.swen.mctg.models.User;
+
 import java.io.*;
 import java.lang.System.*;
 import java.net.ServerSocket;
@@ -40,6 +44,13 @@ public class Main {
         /*
             End of testing section
          */
+
+
+        //###LOGIN TEST###
+        User user = new User("luki", "1234", 0, new Stack(), new Stack());
+        BusinessHandler testHandler = new BusinessHandler();
+        User resultUser = testHandler.login(user);
+        System.out.printf(resultUser + " .##### ");
 
         try ( ServerSocket listener = new ServerSocket(1234)) {
             while (true) {

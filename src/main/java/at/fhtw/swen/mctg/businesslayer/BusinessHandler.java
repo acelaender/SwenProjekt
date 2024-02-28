@@ -1,16 +1,20 @@
 package at.fhtw.swen.mctg.businesslayer;
 
-import at.fhtw.swen.mctg.dataaccesslayer.DataHandler;
+import at.fhtw.swen.mctg.controller.Controller;
+import at.fhtw.swen.mctg.dataaccesslayer.UnitOfWork;
+import at.fhtw.swen.mctg.dataaccesslayer.repository.UserRepository;
 import at.fhtw.swen.mctg.models.Package;
 import at.fhtw.swen.mctg.models.User;
 
-public class BusinessHandler {
+import java.util.ArrayList;
+
+public class BusinessHandler extends Controller {
 
 
     public BusinessHandler() {
     }
 
-    public String register(User user){
+    /*public String register(User user){
         DataHandler dataHandler = new DataHandler();
         String returnVal = dataHandler.register(user);
         return returnVal;
@@ -23,6 +27,21 @@ public class BusinessHandler {
         pack = pack.buy();
         user.addCardsToCardCollection(pack.getCards());
         return ("true");
+    }
+    */
+
+    public User login(User user) {
+        UnitOfWork unitOfWork = new UnitOfWork();
+        try(unitOfWork) {
+            User loggedUser = new UserRepository(unitOfWork).login(user);
+            String userDataJSON = this.getObjectMapper().writeValueAsString(loggedUser);
+            unitOfWork.commitTransaction();
+            return loggedUser;
+        } catch (Exception e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+            return null;
+        }
     }
 
     public String play(User user){
