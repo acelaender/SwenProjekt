@@ -1,4 +1,4 @@
-package at.fhtw.swen.mctg;
+package at.fhtw.swen.mctg.models;
 import java.lang.String;
 public class Card {
 

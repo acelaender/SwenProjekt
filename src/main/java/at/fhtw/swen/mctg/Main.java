@@ -1,6 +1,9 @@
 package at.fhtw.swen.mctg;
 
+import java.io.*;
 import java.lang.System.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
@@ -12,6 +15,7 @@ public class Main {
             This is just for testing
             TODO: move this into the test resource
          */
+        /*
         Stack stackUser1 = new Stack();
         Card card1 = new Card("monster1", "water", 10, "monster");
         Card card2 = new Card("monster2", "fire", 12, "monster");
@@ -37,6 +41,38 @@ public class Main {
             End of testing section
          */
 
+        try ( ServerSocket listener = new ServerSocket(1234)) {
+            while (true) {
+                Socket serviceSocket = listener.accept();
+                BufferedReader input = new BufferedReader(new InputStreamReader(serviceSocket.getInputStream()));
+                PrintStream output = new PrintStream(serviceSocket.getOutputStream());
+                while(true){
+                    String line = input.readLine();
+                    if(line == null || line.equalsIgnoreCase("quit")){
+                        break;
+                    }
+                    if(line.startsWith("POST")){
+                        System.out.println("EchoServer called Post");
+                    }
+
+                    System.out.println("EchoServer: echo " + line);
+                    output.println(line);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("EchoServer: ERROR when connecting: " + e);
+        }
+        /*
+                ServerSocket serverSocket = new ServerSocket(1234);
+                Socket clientSocket = serverSocket.accept();
+                PrintWriter out =
+                        new PrintWriter(clientSocket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(clientSocket.getInputStream()));
+        ) {
+
+        }
+        */
 
 
         return;

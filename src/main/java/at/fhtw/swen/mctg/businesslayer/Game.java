@@ -1,4 +1,7 @@
-package at.fhtw.swen.mctg;
+package at.fhtw.swen.mctg.businesslayer;
+
+import at.fhtw.swen.mctg.models.Card;
+import at.fhtw.swen.mctg.models.User;
 
 public class Game {
     private int round;

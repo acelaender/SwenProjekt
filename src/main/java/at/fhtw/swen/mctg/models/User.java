@@ -1,4 +1,4 @@
-package at.fhtw.swen.mctg;
+package at.fhtw.swen.mctg.models;
 
 import java.util.ArrayList;
 
@@ -15,6 +15,11 @@ public class User {
         this.coins = coins;
         this.stack = stack;
         this.cardCollection = cardCollection;
+    }
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
     }
 
     public boolean hasCards(){

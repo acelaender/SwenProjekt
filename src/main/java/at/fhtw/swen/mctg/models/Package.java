@@ -1,4 +1,4 @@
-package at.fhtw.swen.mctg;
+package at.fhtw.swen.mctg.models;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -14,11 +14,17 @@ public class Package {
         this.cost = cost;
     }
 
-    public void buy(User user){
-        user.subtractCoins(cost);
+    public ArrayList<Card> getCards() {
+        return cards;
+    }
+
+    public int getCost() {
+        return cost;
+    }
+
+    public Package buy(){
         this.cards = instantiateCards();
-        //TODO: Maybe just return the package for now direct import into users inventory
-        user.addCardsToCardCollection(this.cards);
+        return this;
     }
 
     private ArrayList<Card> instantiateCards(){
