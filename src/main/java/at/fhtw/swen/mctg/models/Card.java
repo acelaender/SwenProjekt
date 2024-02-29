@@ -1,30 +1,34 @@
 package at.fhtw.swen.mctg.models;
 import java.lang.String;
 public class Card {
-
+    int id;
     public String name;
     private int damage;
-    public String element;
+    public Element element;
     private String type;
 
-    private int id;
 
     //TODO: Later on maybe the types persisted in database with weaknesses and strengths
 
     //TODO: Cards generally persisted in Database.
 
-    public Card(String name, String element, int damage, String type){
+    public Card(int id, String name, Element element, int damage, String type){
+        this.id = id;
         this.name = name;
         this.damage = damage;
         this.element = element;
         this.type = type;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public int getDamage() {
         return damage;
     }
 
-    public String getElement() {
+    public Element getElement() {
         return element;
     }
 

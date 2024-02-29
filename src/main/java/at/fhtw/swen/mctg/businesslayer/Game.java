@@ -48,11 +48,14 @@ public class Game {
             } else {
                 int damage1 = 0;
                 int damage2 = 0;
+                /*
                 if(card1.isSpell() && card2.isVulnerable(card1.getElement())){
                     damage1 = card1.getDamage() * 2;
                 }else if(card2.isSpell() && card1.isVulnerable(card2.getElement())){
                     damage2 = card2.getDamage() * 2;
                 }
+
+                 */
             }
 
             this.round++;

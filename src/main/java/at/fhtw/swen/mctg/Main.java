@@ -1,6 +1,11 @@
 package at.fhtw.swen.mctg;
 
 import at.fhtw.swen.mctg.businesslayer.BusinessHandler;
+import at.fhtw.swen.mctg.httpserver.http.Method;
+import at.fhtw.swen.mctg.httpserver.server.Request;
+import at.fhtw.swen.mctg.httpserver.server.Response;
+import at.fhtw.swen.mctg.httpserver.server.Server;
+import at.fhtw.swen.mctg.httpserver.utils.Router;
 import at.fhtw.swen.mctg.models.Stack;
 import at.fhtw.swen.mctg.models.User;
 
@@ -12,7 +17,7 @@ import java.net.Socket;
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
 
         /*
@@ -47,10 +52,23 @@ public class Main {
 
 
         //###LOGIN TEST###
+
+        /*
         User user = new User("luki", "1234", 0, new Stack(), new Stack());
         BusinessHandler testHandler = new BusinessHandler();
-        User resultUser = testHandler.login(user);
-        System.out.printf(resultUser + " .##### ");
+        Response resultUser = testHandler.login(user);
+
+        System.out.println(resultUser);
+
+        Response resultRegistration1 = testHandler.register(user);
+
+        System.out.println(resultRegistration1);
+
+        User user2 = new User("Lydia", "5678", 0, new Stack(), new Stack());
+        Response resultRegistration2 = testHandler.register(user2);
+
+        System.out.println(resultRegistration2);
+
 
         try ( ServerSocket listener = new ServerSocket(1234)) {
             while (true) {
@@ -84,8 +102,12 @@ public class Main {
 
         }
         */
+        BusinessHandler service = new BusinessHandler();
+        Server server = new Server(1234, new Router());
+        server.start();
 
 
         return;
+
     }
 }
