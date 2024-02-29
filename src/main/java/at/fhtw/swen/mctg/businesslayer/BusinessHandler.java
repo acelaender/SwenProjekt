@@ -140,6 +140,21 @@ public class BusinessHandler extends Controller implements Service {
                 }
             }
         }
+        else if (request.getMethod() == Method.GET){
+            if(request.getPathParts().get(0).equals("cards") && request.getPathParts().get(1).equals("packs")){
+                if(request.getPathParts().size() < 2){
+                    return new Response(HttpStatus.BAD_REQUEST, ContentType.JSON, "{ \"message\" : \"Bad Request\"");
+                }
+                try {
+                    User user = this.getObjectMapper().readValue(request.getBody(), User.class);
+                    System.out.println(Integer.parseInt(request.getPathParts().get(2)));
+                    return buyPackage(user, Integer.parseInt(request.getPathParts().get(2)));
+
+                } catch (JsonProcessingException e){
+                    e.printStackTrace();
+                }
+            }
+        }
 
         return new Response(HttpStatus.ACCEPTED, ContentType.PLAIN_TEXT, "Response");
     }

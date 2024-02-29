@@ -64,7 +64,11 @@ public class CardRepository {
             preparedStatement.setInt(1, elementID);
             ResultSet resultSet = preparedStatement.executeQuery();
 
-            return new Element(resultSet.getInt(1), resultSet.getString(2), resultSet.getInt(3));
+            if(resultSet.next()){
+                return new Element(resultSet.getInt(1), resultSet.getString(2), resultSet.getInt(3));
+            }else {
+                return null;
+            }
 
         } catch (SQLException e) {
             throw new DataAccessException("Select nicht erfolgreich ", e);
@@ -94,7 +98,7 @@ public class CardRepository {
 
     private int lastPKInventory(){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
-                    select * from inventory order by id desc
+                    select * from inventory order by rid desc
                 """))
         {
             ResultSet resultSet = preparedStatement.executeQuery();

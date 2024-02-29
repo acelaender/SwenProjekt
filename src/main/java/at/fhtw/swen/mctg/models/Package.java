@@ -37,6 +37,8 @@ public class Package {
         possibleCards.add(new Card("Fire Spell", "fire", 15, "spell"));
         possibleCards.add(new Card("Earth Spell", "normal", 15, "spell"));
          */
+        this.cards = new ArrayList<Card>();
+
         for (int i = 0; i < PACKSIZE; i++) {
             this.cards.add(possibleCards.get(rand.nextInt(possibleCards.size())));
         }
