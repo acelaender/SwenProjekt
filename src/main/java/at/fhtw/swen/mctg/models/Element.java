@@ -2,7 +2,7 @@ package at.fhtw.swen.mctg.models;
 
 public class Element {
     int elementID;
-    String elementName;
+    public String elementName;
     int vulnerability;
 
     public Element(int elementID, String elementName, int vulnerability) {

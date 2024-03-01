@@ -2,9 +2,8 @@ package at.fhtw.swen.mctg.dataaccesslayer.repository;
 
 import at.fhtw.swen.mctg.dataaccesslayer.DataAccessException;
 import at.fhtw.swen.mctg.dataaccesslayer.UnitOfWork;
+import at.fhtw.swen.mctg.models.*;
 import at.fhtw.swen.mctg.models.Package;
-import at.fhtw.swen.mctg.models.Stack;
-import at.fhtw.swen.mctg.models.User;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,13 +22,12 @@ public class UserRepository {
         this.unitOfWork = unitOfWork;
     }
 
-
-    public boolean userExists(User user){
+    public boolean userExists(String user){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
                     select * from users where username = ?
                 """))
         {
-            preparedStatement.setString(1, user.username);
+            preparedStatement.setString(1, user);
             ResultSet resultSet = preparedStatement.executeQuery();
             ArrayList<User> userRows = new ArrayList<>();
             while(resultSet.next())
@@ -46,7 +44,6 @@ public class UserRepository {
             if(userRows.size() > 0){
                 return true;
             }else{
-                //TODO: when pw encoded change this password comparison with th encoding one!
                 return false;
             }
         } catch (SQLException e) {
@@ -55,19 +52,21 @@ public class UserRepository {
     }
 
     //TODO: Return value should be int, an Inventory needs to be created and the primary key needs to be a new one
-    public void register(User user) {
+    public void register(UserCredentials user) {
         int lastPk = lastPK();
         //TODO hash password
 
         try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
-                insert into users (id, username, password, coins, inventoryID) values (?, ?, ?, ?, ?)
+                insert into users (id, username, password, coins, bio, image) values (?, ?, ?, ?, ?, ?)
                 """))
         {
+            System.out.println(lastPk + " " + user.getUsername() + " " + user.getUsername() + " " + STARTINGCOINS + " ");
             preparedStatement.setInt(1, lastPk);
-            preparedStatement.setString(2, user.username);
+            preparedStatement.setString(2, user.getUsername());
             preparedStatement.setString(3, user.getPassword());
             preparedStatement.setInt(4, STARTINGCOINS);
-            preparedStatement.setInt(5, 0);
+            preparedStatement.setString(5, "");
+            preparedStatement.setString(6, "");
 
             int result = preparedStatement.executeUpdate();
             return;
@@ -78,12 +77,85 @@ public class UserRepository {
 
     }
 
-    public User login(User user) {
+    public UserData getUser(String username){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
                     select * from users where username = ?
                 """))
         {
-            preparedStatement.setString(1, user.username);
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            ArrayList<UserData> userRows = new ArrayList<>();
+            while(resultSet.next())
+            {
+                UserData resultUser = new UserData(
+                        resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getString(5),
+                        resultSet.getString(6),
+                        resultSet.getInt(4));
+                userRows.add(resultUser);
+            }
+            if(!userRows.isEmpty()){
+                return userRows.get(0);
+            }else{
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    public UserData getUser(int userid){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from users where id = ?
+                """))
+        {
+            preparedStatement.setInt(1, userid);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            ArrayList<UserData> userRows = new ArrayList<>();
+            while(resultSet.next())
+            {
+                UserData resultUser = new UserData(
+                        resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getString(5),
+                        resultSet.getString(6),
+                        resultSet.getInt(4));
+                userRows.add(resultUser);
+            }
+            if(!userRows.isEmpty()){
+                return userRows.get(0);
+            }else{
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    public void updateUser(String username, UserData userData){
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                update users set bio = ?, image = ? where username = ?
+                """))
+        {
+            preparedStatement.setString(1, userData.getBio());
+            preparedStatement.setString(2, userData.getImage());
+            preparedStatement.setString(3, username);
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+
+    public boolean login(UserCredentials user) {
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from users where username = ?
+                """))
+        {
+            preparedStatement.setString(1, user.getUsername());
             ResultSet resultSet = preparedStatement.executeQuery();
             ArrayList<User> userRows = new ArrayList<>();
             while(resultSet.next())
@@ -97,37 +169,175 @@ public class UserRepository {
                         new Stack());
                 userRows.add(resultUser);
             }
-            if(userRows.size() > 1){
-                return null;
+            if(userRows.size() != 1){
+                return false;
             }else{
                 User resultUser = userRows.get(0);
                 //TODO: when pw encoded change this password comparison with th encoding one!
                 if(resultUser.getPassword().equals(user.getPassword())){
-                    return resultUser;
+                    return true;
                 }else{
-                    return null;
+                    return false;
                 }
-
             }
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+
+    public boolean updateCoins(UserCredentials user){
+        int result;
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                select coins from users where username = ?
+                """))
+        {
+            preparedStatement.setString(1, user.getUsername());
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                result = resultSet.getInt(1);
+                if(result < 5) {
+                    return false;
+                }
+            }else{
+                return false;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                update users set coins = ? where username = ?
+                """))
+        {
+            preparedStatement.setInt(1, result - 5);
+            preparedStatement.setString(2, user.getUsername());
+
+            preparedStatement.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+
+    public void addCardsToInventory(UserCredentials user, ArrayList<Card> cards){
+        int id = getUser(user.getUsername()).getId();
+
+        for (int i = 0; i < cards.size(); i++) {
+            try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    insert into inventory (rid, userid, cardid, instack) values (?, ?, ?, ?)
+                    """)) {
+                int lastPk = lastPKInventory();
+                preparedStatement.setInt(1, lastPk);
+                preparedStatement.setInt(2, id);
+                preparedStatement.setInt(3, cards.get(i).getId());
+                preparedStatement.setInt(4, 0);
+
+                int result = preparedStatement.executeUpdate();
+
+            } catch (SQLException e) {
+                throw new DataAccessException("Insert nicht erfolgreich ", e);
+            }
+        }
+        return;
+    }
+
+    public UserStats getStats(UserData user){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from stats where userid = ?
+                """))
+        {
+            int userId = getUser(user.getName()).getId();
+            preparedStatement.setInt(1, userId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if(resultSet.next())
+            {
+                UserStats stats = new UserStats(
+                        user.getName(),
+                        resultSet.getInt(3),
+                        resultSet.getInt(4),
+                        resultSet.getInt(5));
+                return stats;
+            }else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    public ArrayList<UserStats> getScoreboard(){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from stats order by elo desc
+                """))
+        {
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            ArrayList<UserStats> scoreboard = new ArrayList<>();
+
+            while(resultSet.next())
+            {
+                String username = getUser(resultSet.getInt(2)).getName();
+                UserStats stats = new UserStats(
+                        username,
+                        resultSet.getInt(3),
+                        resultSet.getInt(4),
+                        resultSet.getInt(5));
+                scoreboard.add(stats);
+            }
+
+            return scoreboard;
 
         } catch (SQLException e) {
             throw new DataAccessException("Select nicht erfolgreich ", e);
         }
     }
 
-    public void updateCoins(User user){
-        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
-                update users set coins = ? where id = ?
+    public ArrayList<TradingDeal> getTradingDeals(){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from tradings
                 """))
         {
-            preparedStatement.setInt(1, user.getCoins());
-            preparedStatement.setInt(2, user.getId());
+            ResultSet resultSet = preparedStatement.executeQuery();
 
-            int result = preparedStatement.executeUpdate();
-            return;
+            ArrayList<TradingDeal> tradingDeals = new ArrayList<>();
+
+            while(resultSet.next())
+            {
+                TradingDeal deal = new TradingDeal(
+                        resultSet.getInt(1),
+                        resultSet.getInt(2),
+                        "",
+                        resultSet.getString(3),
+                        resultSet.getInt(4));
+                tradingDeals.add(deal);
+            }
+
+            return tradingDeals;
 
         } catch (SQLException e) {
-            throw new DataAccessException("Insert nicht erfolgreich ", e);
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    private int lastPKInventory(){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from inventory order by rid desc
+                """))
+        {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            int lastPK = 1;
+            if(resultSet.next()){
+                lastPK = resultSet.getInt(1) + 1;
+            }
+
+            return lastPK;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
         }
     }
 

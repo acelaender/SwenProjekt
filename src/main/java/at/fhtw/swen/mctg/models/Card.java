@@ -7,17 +7,30 @@ public class Card {
     public Element element;
     private String type;
 
+    private String elementName;
 
     //TODO: Later on maybe the types persisted in database with weaknesses and strengths
 
     //TODO: Cards generally persisted in Database.
 
-    public Card(int id, String name, Element element, int damage, String type){
+    public Card(int id, String name, Element element, int damage, String type, String elementName){
         this.id = id;
         this.name = name;
         this.damage = damage;
         this.element = element;
         this.type = type;
+        this.elementName = elementName;
+    }
+
+    public String getElementName() {
+        return elementName;
+    }
+
+    public void setElementName(String elementName) {
+        this.elementName = elementName;
+    }
+
+    public Card() {
     }
 
     public int getId() {
@@ -56,6 +69,7 @@ public class Card {
             return false;
         }
     }
+
 }
 
 //Models
