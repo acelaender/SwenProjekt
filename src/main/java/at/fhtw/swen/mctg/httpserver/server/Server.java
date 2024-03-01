@@ -6,12 +6,18 @@ import at.fhtw.swen.mctg.httpserver.utils.Router;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
     private int port;
     private Router router;
+
+    public static ArrayList<Thread> threads = new ArrayList<>();
+    public static HashMap<Thread, Integer> userIdsMap = new HashMap<>();
+    public static HashMap<Thread, String> playedGameQueue = new HashMap<>();
 
     public Server(int port, Router router) {
         this.port = port;

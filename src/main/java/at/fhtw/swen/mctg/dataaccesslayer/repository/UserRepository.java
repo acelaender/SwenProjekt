@@ -35,9 +35,6 @@ public class UserRepository {
                 User resultUser = new User(
                         resultSet.getInt(1),
                         resultSet.getString(2),
-                        resultSet.getString(3),
-                        resultSet.getInt(4),
-                        new Stack(),
                         new Stack());
                 userRows.add(resultUser);
             }
@@ -51,7 +48,6 @@ public class UserRepository {
         }
     }
 
-    //TODO: Return value should be int, an Inventory needs to be created and the primary key needs to be a new one
     public void register(UserCredentials user) {
         int lastPk = lastPK();
         //TODO hash password
@@ -157,22 +153,18 @@ public class UserRepository {
         {
             preparedStatement.setString(1, user.getUsername());
             ResultSet resultSet = preparedStatement.executeQuery();
-            ArrayList<User> userRows = new ArrayList<>();
+            ArrayList<UserCredentials> userRows = new ArrayList<>();
             while(resultSet.next())
             {
-                User resultUser = new User(
-                        resultSet.getInt(1),
+                UserCredentials resultUser = new UserCredentials(
                         resultSet.getString(2),
-                        resultSet.getString(3),
-                        resultSet.getInt(4),
-                        new Stack(),
-                        new Stack());
+                        resultSet.getString(3));
                 userRows.add(resultUser);
             }
             if(userRows.size() != 1){
                 return false;
             }else{
-                User resultUser = userRows.get(0);
+                UserCredentials resultUser = userRows.get(0);
                 //TODO: when pw encoded change this password comparison with th encoding one!
                 if(resultUser.getPassword().equals(user.getPassword())){
                     return true;
@@ -427,6 +419,66 @@ public class UserRepository {
 
         } catch (SQLException e) {
             throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    private int getElo(int userId){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select elo from stats where userid = ?
+                """))
+        {
+            preparedStatement.setInt(1, userId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                return resultSet.getInt(1) + 1;
+            }
+            return 0;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    public void win(int userid){
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                update stats set elo = ?, wins = wins + 1 where userid = ?
+                """))
+        {
+            int newElo = getElo(userid);
+            if (newElo > 990){
+                newElo = 1000;
+            }else{
+                newElo += 10;
+            }
+            preparedStatement.setInt(1, newElo);
+            preparedStatement.setInt(2, userid);
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+    public void loose(int userid){
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                update stats set elo = ?, losses = losses + 1 where userid = ?
+                """))
+        {
+            int newElo = getElo(userid);
+            if (newElo < 10){
+                newElo = 0;
+            }else{
+                newElo -= 10;
+            }
+            preparedStatement.setInt(1, newElo);
+            preparedStatement.setInt(2, userid);
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
         }
     }
 

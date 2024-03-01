@@ -26,7 +26,6 @@ public class Package {
 
     public void instantiateCards(ArrayList<Card> possibleCards){
         Random rand = new Random();
-        //TODO: get List of possible Cards from Database;
         //for now just a hardcoded List of possible Cards:
         /*ArrayList<Card> possibleCards = new ArrayList<>();
         possibleCards.add(new Card("Orc", "normal", 5, "monster"));

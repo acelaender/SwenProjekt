@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-public class BusinessHandler extends Controller implements Service {
+import static at.fhtw.swen.mctg.httpserver.server.Server.*;
 
+
+public class BusinessHandler extends Controller implements Service {
 
     public BusinessHandler() {
     }
@@ -68,7 +70,10 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    //TODO: admin check
+    private void removeCard(int cid){
+
+    }
+
     private Response getUserData(String username){
         UnitOfWork unitOfWork = new UnitOfWork();
         try(unitOfWork){
@@ -298,8 +303,60 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    private String play(User user){
-        return "true";
+    private String play(int opponent, int user){
+        UnitOfWork unitOfWork = new UnitOfWork();
+        try(unitOfWork){
+
+            User player1;
+            User player2;
+
+            String username1 = new UserRepository(unitOfWork).getUser(user).getName();
+            String username2 = new UserRepository(unitOfWork).getUser(user).getName();
+
+            ArrayList<Card> stack1 = new CardRepository(unitOfWork).getStack(new UserData(user, username1, "", "", 0));
+            ArrayList<Card> stack2 = new CardRepository(unitOfWork).getStack(new UserData(opponent, username2, "", "", 0));
+
+            player1 = new User(user, username1, new Stack(stack1));
+            player2 = new User(opponent, username2, new Stack(stack2));
+
+            Game game = new Game(player1, player2);
+            String gameProtocol = game.fight();
+
+            if(game.winner == 1){
+                ArrayList<Card> Winningstack = new ArrayList<>();
+                CardRepository cardRepository = new CardRepository(unitOfWork);
+                for (int i = 0; i < stack2.size(); i++) {
+                    Card current = cardRepository.getCardTypeFromInvCard(stack2.get(i).getId());
+                    Winningstack.add(current);
+                    cardRepository.removeCard(stack2.get(i).getId());
+                }
+
+                new UserRepository(unitOfWork).addCardsToInventory(new UserCredentials(username1, ""), Winningstack);
+                new UserRepository(unitOfWork).win(user);
+                new UserRepository(unitOfWork).loose(opponent);
+                unitOfWork.commitTransaction();
+            }else if(game.winner == 2){
+                ArrayList<Card> Winningstack = new ArrayList<>();
+                CardRepository cardRepository = new CardRepository(unitOfWork);
+                for (int i = 0; i < stack1.size(); i++) {
+                    Card current = cardRepository.getCardTypeFromInvCard(stack1.get(i).getId());
+                    Winningstack.add(current);
+                    cardRepository.removeCard(stack1.get(i).getId());
+                }
+
+                new UserRepository(unitOfWork).addCardsToInventory(new UserCredentials(username2, ""), Winningstack);
+                new UserRepository(unitOfWork).win(opponent);
+                new UserRepository(unitOfWork).loose(user);
+                unitOfWork.commitTransaction();
+            }
+
+            return gameProtocol;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+        }
+        return null;
     }
 
 
@@ -369,7 +426,7 @@ public class BusinessHandler extends Controller implements Service {
         }
         else if(request.getPathParts().get(0).equals("deck")){
             if(request.getMethod() == Method.GET){
-                try {  //TODO: params miteinbeziehen
+                try {
                     UserData user = this.getObjectMapper().readValue(request.getBody(), UserData.class);
                     return getStack(user);
 
@@ -402,8 +459,45 @@ public class BusinessHandler extends Controller implements Service {
             return getScoreboard();
         }
         else if(request.getPathParts().get(0).equals("battles") && request.getMethod() == Method.POST){
-            //TODO
-        }else if(request.getPathParts().get(0).equals("tradings")){
+            int userId = 0;
+            try {
+                userId = this.getObjectMapper().readValue(request.getBody(), UserData.class).getId();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            if(threads.isEmpty()){
+
+                threads.add(Thread.currentThread());
+                userIdsMap.put(Thread.currentThread(), userId);
+
+                //try {
+                    while(playedGameQueue.get(Thread.currentThread()) == null){
+
+                    };
+
+                    String gameProtocol = playedGameQueue.get(Thread.currentThread());
+                    playedGameQueue.remove(Thread.currentThread());
+
+                    return new Response(HttpStatus.ACCEPTED, ContentType.JSON, gameProtocol);
+
+                //}
+                /* catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                */
+            }else{
+                Thread opponent = threads.get(0);
+                threads.remove(0);
+                int opponentID = userIdsMap.get(opponent);
+                userIdsMap.remove(opponent);
+
+                String gameProtocol = play(opponentID, userId);
+                playedGameQueue.put(opponent, gameProtocol);
+                return new Response(HttpStatus.ACCEPTED, ContentType.JSON, gameProtocol);
+
+            }
+        }
+        else if(request.getPathParts().get(0).equals("tradings")){
             if(request.getPathParts().size() == 1) {
                 if (request.getMethod() == Method.GET) {
                     //Retrieves currently available trading offers
@@ -421,17 +515,13 @@ public class BusinessHandler extends Controller implements Service {
                 if (request.getMethod() == Method.DELETE) {
                     return deleteTradingDeal(Integer.parseInt(request.getPathParts().get(1)));
                 } else if (request.getMethod() == Method.POST) {
-                    //Carry out trade deal with provided card
-                    //TODO
                 }
             }
         }
         else{
-            while(true){
-                System.out.println("thread running");
-            }
+            return new Response(HttpStatus.BAD_REQUEST, ContentType.JSON, "{\"message\" : \"Request not supported!\"}");
         }
 
-        return new Response(HttpStatus.ACCEPTED, ContentType.PLAIN_TEXT, "Response");
+        return new Response(HttpStatus.BAD_REQUEST, ContentType.PLAIN_TEXT, "Response");
     }
 }

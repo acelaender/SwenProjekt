@@ -265,6 +265,10 @@ public class CardRepository {
         }
     }
 
+    public void removeCard(int cardID){
+
+    }
+
     private int lastPKPackages(){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
                     select * from packages order by pid desc

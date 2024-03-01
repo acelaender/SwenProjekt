@@ -14,6 +14,8 @@ import java.lang.System.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
+
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
@@ -33,6 +35,12 @@ public class Main {
         stackUser1.addCard(card2);
         stackUser1.addCard(card3);
         User testUser1 = new User("user1name", "xyz", 20, stackUser1, new Stack());
+
+
+
+
+
+
 
         Stack stackUser2 = new Stack();
         Card card4 = new Card("monster4", "water", 11, "monster");
@@ -103,7 +111,7 @@ public class Main {
         }
         */
         BusinessHandler service = new BusinessHandler();
-        Server server = new Server(1234, new Router());
+        Server server = new Server(10001, new Router());
         server.start();
 
 

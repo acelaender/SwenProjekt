@@ -9,9 +9,6 @@ public class Card {
 
     private String elementName;
 
-    //TODO: Later on maybe the types persisted in database with weaknesses and strengths
-
-    //TODO: Cards generally persisted in Database.
 
     public Card(int id, String name, Element element, int damage, String type, String elementName){
         this.id = id;
@@ -58,12 +55,11 @@ public class Card {
     }
 
     public boolean isVulnerable(String element){
-        //TODO: check vulnerabilities with database
-        if(this.element.equals("water") && element.equals("fire")){
+        if(this.elementName.equals("water") && element.equals("normal")){
             return true;
-        }else if(this.element.equals("fire") && element.equals("normal")){
+        }else if(this.elementName.equals("fire") && element.equals("water")){
             return true;
-        }else if(this.element.equals("normal") && element.equals("water")){
+        }else if(this.elementName.equals("normal") && element.equals("fire")){
             return true;
         }else{
             return false;
