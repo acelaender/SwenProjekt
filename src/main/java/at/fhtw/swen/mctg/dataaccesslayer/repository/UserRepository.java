@@ -323,6 +323,77 @@ public class UserRepository {
         }
     }
 
+    public void startTradingDeal(TradingDeal deal){
+        int lastPk = lastPKTradings();
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                insert into tradings (tid, cardid, type, minimumdamage) values (?, ?, ?, ?)
+                """))
+        {
+            preparedStatement.setInt(1, lastPKTradings());
+            preparedStatement.setInt(2, deal.getCardToDeal());
+            preparedStatement.setString(3, deal.getType());
+            preparedStatement.setInt(4, deal.getMinimumDamage());
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+
+    public boolean tradeExists(int cardID){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from tradings where cardid = ?
+                """))
+        {
+
+            preparedStatement.setInt(1, cardID);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                return true;
+            }else {
+                return false;
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
+    public void deleteTradingDeal(int dealid){
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                delete from tradings where tid = ?
+                """))
+        {
+            preparedStatement.setInt(1, dealid);
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+
+    private int lastPKTradings(){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from tradings order by tid desc
+                """))
+        {
+            ResultSet resultSet = preparedStatement.executeQuery();
+            int lastPK = 1;
+            if(resultSet.next()){
+                lastPK = resultSet.getInt(1) + 1;
+            }
+
+            return lastPK;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
+
     private int lastPKInventory(){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
                     select * from inventory order by rid desc

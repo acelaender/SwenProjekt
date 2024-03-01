@@ -15,6 +15,9 @@ public class TradingDeal {
         this.minimumDamage = minimumDamage;
     }
 
+    public TradingDeal() {
+    }
+
     public int getId() {
         return id;
     }

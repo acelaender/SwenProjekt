@@ -107,6 +107,8 @@ public class CardRepository {
 
             if(resultSet.next()){
                 card = getCard(resultSet.getInt(1));
+            }else{
+                return null;
             }
 
             return card;
@@ -199,6 +201,29 @@ public class CardRepository {
         }
     }
 
+    public void createPackage(ArrayList<Card> pack){
+        int lastPk = lastPKPackages();
+
+        try(PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                insert into packages (pid, cid1, cid2, cid3, cid4, cid5) values (?, ?, ?, ?, ?, ?)
+                """))
+        {
+
+            preparedStatement.setInt(1, lastPk);
+            preparedStatement.setInt(2, pack.get(0).getId());
+            preparedStatement.setInt(3, pack.get(1).getId());
+            preparedStatement.setInt(4, pack.get(2).getId());
+            preparedStatement.setInt(5, pack.get(3).getId());
+            preparedStatement.setInt(6, pack.get(4).getId());
+
+            int result = preparedStatement.executeUpdate();
+            return;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Insert nicht erfolgreich ", e);
+        }
+    }
+
     private Element getElement(int elementID){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
                     select * from elements where eid = ?
@@ -220,7 +245,25 @@ public class CardRepository {
         }
     }
 
-
+    public boolean isInStack(int cardID){
+        try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""
+                    select * from inventory where rid = ?
+                """))
+        {
+            preparedStatement.setInt(1, cardID);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                if(resultSet.getInt(4) == 0){
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new DataAccessException("Select nicht erfolgreich ", e);
+        }
+    }
 
     private int lastPKPackages(){
         try (PreparedStatement preparedStatement = this.unitOfWork.prepareStatement("""

@@ -107,7 +107,7 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    public Response buyPackage(UserCredentials user){
+    private Response buyPackage(UserCredentials user){
         UnitOfWork unitOfWork = new UnitOfWork();
         try(unitOfWork){
             UserRepository userRepository = new UserRepository(unitOfWork);
@@ -135,7 +135,7 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    public Response getInventory(UserData user){
+    private Response getInventory(UserData user){
         UnitOfWork unitOfWork = new UnitOfWork();
         try(unitOfWork){
             ArrayList<Card> inventory = new CardRepository(unitOfWork).getInventory(user);
@@ -153,7 +153,7 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    public Response getStack(UserData user){
+    private Response getStack(UserData user){
         UnitOfWork unitOfWork = new UnitOfWork();
         try(unitOfWork){
             ArrayList<Card> stack = new CardRepository(unitOfWork).getStack(user);
@@ -229,7 +229,7 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    public Response updateStack(UserData user, ArrayList<Card> stack){
+    private Response updateStack(UserData user, ArrayList<Card> stack){
         UnitOfWork unitOfWork = new UnitOfWork();
         CardRepository cardRepository = new CardRepository(unitOfWork);
 
@@ -244,7 +244,61 @@ public class BusinessHandler extends Controller implements Service {
         }
     }
 
-    public String play(User user){
+    private Response createTradingDeal(TradingDeal deal){
+        UnitOfWork unitOfWork = new UnitOfWork();
+        UserRepository userRepository = new UserRepository(unitOfWork);
+
+        try (unitOfWork) {
+            if(new UserRepository(unitOfWork).tradeExists(deal.getCardToDeal())){
+                return new Response(HttpStatus.CONFLICT, ContentType.JSON, "{ \"message\" : \"This Card is already being traded\" }");
+            }
+            CardRepository repos = new CardRepository(unitOfWork);
+
+            if(repos.isInStack(deal.getCardToDeal())){
+                return new Response(HttpStatus.CONFLICT, ContentType.JSON, "{ \"message\" : \"Card is in stack!\" }");
+            }else{
+                new UserRepository(unitOfWork).startTradingDeal(deal);
+                unitOfWork.commitTransaction();
+                return new Response(HttpStatus.CREATED, ContentType.JSON, "{ \"message\" : \"Trade created\" }");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "{ \"message\" : \"Internal Server Error\" }");
+        }
+    }
+
+    private Response deleteTradingDeal(int dealID){
+        UnitOfWork unitOfWork = new UnitOfWork();
+
+        try (unitOfWork) {
+            new UserRepository(unitOfWork).deleteTradingDeal(dealID);
+            unitOfWork.commitTransaction();
+            return new Response(HttpStatus.OK, ContentType.JSON, "{ \"message\" : \"Deal deleted!\" }");
+        } catch (Exception e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "{ \"message\" : \"Internal Server Error\" }");
+        }
+    }
+
+    private Response createPackage(ArrayList<Card> pack){
+        UnitOfWork unitOfWork = new UnitOfWork();
+        CardRepository cardRepository = new CardRepository(unitOfWork);
+
+        try (unitOfWork) {
+            cardRepository.createPackage(pack);
+            unitOfWork.commitTransaction();
+            return new Response(HttpStatus.CREATED, ContentType.JSON, "{ \"message\" : \"Package created\" }");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            unitOfWork.rollbackTransaction();
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "{ \"message\" : \"Internal Server Error\" }");
+        }
+    }
+
+    private String play(User user){
         return "true";
     }
 
@@ -288,15 +342,12 @@ public class BusinessHandler extends Controller implements Service {
             }
         }
         else if(request.getPathParts().get(0).equals("packages") && request.getMethod() == Method.POST){
-            /*
             try {
                 UserCredentials userCredentials = this.getObjectMapper().readValue(request.getBody(), UserCredentials.class);
                 return login(userCredentials);
             } catch (JsonProcessingException e){
                 e.printStackTrace();
             }
-            //TODO: create Packages appearently
-             */
         }
         else if(request.getPathParts().get(0).equals("transaction") && request.getPathParts().get(1).equals("packages") && request.getMethod() == Method.POST){
             try {
@@ -349,7 +400,8 @@ public class BusinessHandler extends Controller implements Service {
         }
         else if(request.getPathParts().get(0).equals("scoreboard") && request.getMethod() == Method.GET){
             return getScoreboard();
-        }else if(request.getPathParts().get(0).equals("battles") && request.getMethod() == Method.POST){
+        }
+        else if(request.getPathParts().get(0).equals("battles") && request.getMethod() == Method.POST){
             //TODO
         }else if(request.getPathParts().get(0).equals("tradings")){
             if(request.getPathParts().size() == 1) {
@@ -358,16 +410,25 @@ public class BusinessHandler extends Controller implements Service {
                     return getTradingDeals();
                 } else if (request.getMethod() == Method.POST) {
                     //Creates new trading deal
-                    //TODO
+                    try {
+                        TradingDeal deal = this.getObjectMapper().readValue(request.getBody(), TradingDeal.class);
+                        return createTradingDeal(deal);
+                    } catch (JsonProcessingException e){
+                        e.printStackTrace();
+                    }
                 }
             }else if(request.getPathParts().size() == 2){
                 if (request.getMethod() == Method.DELETE) {
-                    //deletes existing trading deal
-                    //TODO
+                    return deleteTradingDeal(Integer.parseInt(request.getPathParts().get(1)));
                 } else if (request.getMethod() == Method.POST) {
                     //Carry out trade deal with provided card
                     //TODO
                 }
+            }
+        }
+        else{
+            while(true){
+                System.out.println("thread running");
             }
         }
 
